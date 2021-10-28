@@ -127,6 +127,24 @@ create_react_time <- function(df, var) {
       ))
 }
 
+create_react_time2 <- function(df, x, var) {
+    df %>% 
+    group_by({{x}}) %>% 
+      summarize(Mean = mean({{var}}),
+                SD = sd({{var}}),
+                Min = min({{var}}),
+                Max = max({{var}}),
+                Total = length({{var}})) %>% 
+      mutate_if(is.numeric, round, 2) %>% 
+      reactable(columns = list(
+        Mean = colDef(format = colFormat(separators = TRUE, suffix = " days")),
+        SD = colDef(format = colFormat(separators = TRUE, suffix = " days")),
+        Min = colDef(format = colFormat(separators = TRUE, suffix = " days")),
+        Max = colDef(format = colFormat(separators = TRUE, suffix = " days")),
+        Total = colDef(format = colFormat(separators = TRUE, suffix = " concussions"))
+      ))
+}
+
 create_react <- function(df, var) {
     df %>% 
       summarize(Mean = mean({{var}}),
@@ -148,15 +166,40 @@ create_react <- function(df, var) {
 my_mean(simsimp$dys_btwn_onset_test_4)
 ```
 
+```{r, include=FALSE}
+simsimp %>% 
+  count(student_id)
 
-# Data Overview
+length(unique(simsimp$student_id))
+
+simsimp %>% 
+  group_by(row, gender) %>% 
+  count()
+```
+
+# Demographics
+
+Sidebar {.sidebar}
+------------
+
+The **Sex** table displays the total number of injuries by sex used in the data set. The total number of injuries is 755 that can be utilized for analysis. Like the previous iteration of the paper, some individuals sustained multiple injuries that are tracked individually. This is a characteristic that one of the reviewers specified we describe more to better explain the sample. The tables displayed present data representing the total number of _injuries_, which include instances of repeat injuries. Data on the number of unique individuals is outlined here: 
+
+  *  **Number of females:** 271
+  * **Number of males:** 460
+  
+  * 271 females sustained one tracked injury
+  * 460 males sustained one tracked injury 
+  * 10 females sustained two tracked injuries
+  * 12 males sustained two tracked injuries
+  * 1 female sustained three tracked injuries
+  * 1 male sustained three tracked injuries 
 
 Row {.tabset}
 -----------------------------------------------------------------------
 
 ### Sex 
 
-```{r, include=FALSE}
+```{r, include=TRUE}
 simsimp %>% 
   group_by(gender) %>% 
   summarize(total = n()) %>% 
@@ -193,6 +236,222 @@ sims_sex_plot <- ggplot(sims_sex, aes(fct_reorder(gender, total), total)) +
        y = "Total")
 ```
 
-```{r, include=TRUE}
+```{r, include=FALSE}
 ggplotly(sims_sex_plot)
+```
+
+### Age
+
+```{r, include=TRUE}
+simsimp %>% 
+  group_by(age) %>% 
+  summarize(total = n()) %>% 
+  reactable(
+    columns = list(
+      age = colDef(name = "Age",
+                      align = "center"),
+      total = colDef(name = "Total",
+                     align = "center",
+                     format = colFormat(suffix = " injuries"))),
+    pagination = TRUE,
+    striped = TRUE,
+    outlined = TRUE,
+    compact = TRUE,
+    highlight = TRUE,
+    bordered = TRUE
+    )
+```
+
+```{r, include=FALSE}
+sims_age <- simsimp %>% 
+  mutate(age = as.factor(age)) %>% 
+  group_by(age) %>% 
+  summarize(total = n()) %>% 
+  arrange(desc(total))
+
+
+
+sims_age_plot <- ggplot(sims_age, aes(fct_reorder(age, total), total)) +
+  geom_col(fill = "blue",
+           alpha = 0.7) +
+  coord_flip() +
+  labs(x = "Age",
+       y = "Total")
+```
+
+```{r, include=FALSE}
+ggplotly(sims_age_plot)
+```
+
+### League
+
+```{r, include=TRUE}
+simsimp %>% 
+  group_by(league) %>% 
+  summarize(total = n()) %>% 
+  arrange(desc(total)) %>% 
+  reactable(
+    columns = list(
+      league = colDef(name = "League",
+                      align = "center"),
+      total = colDef(name = "Total",
+                     align = "center",
+                     format = colFormat(suffix = " injuries"))),
+    pagination = TRUE,
+    striped = TRUE,
+    outlined = TRUE,
+    compact = TRUE,
+    highlight = TRUE,
+    bordered = TRUE
+    )
+```
+
+### School
+
+```{r}
+simsimp %>% 
+  group_by(school) %>% 
+  summarize(total = n()) %>% 
+  arrange(desc(total)) %>% 
+  reactable(
+    columns = list(
+      school = colDef(name = "School",
+                      align = "center"),
+      total = colDef(name = "Total",
+                     align = "center",
+                     format = colFormat(suffix = " injuries"))),
+    pagination = TRUE,
+    striped = TRUE,
+    outlined = TRUE,
+    compact = TRUE,
+    highlight = TRUE,
+    bordered = TRUE,
+    searchable = TRUE
+    )
+```
+
+### Sport
+
+```{r}
+simsimp %>% 
+  group_by(sport) %>% 
+  summarize(total = n()) %>% 
+  arrange(desc(total)) %>% 
+  reactable(
+    columns = list(
+      sport = colDef(name = "Sport",
+                      align = "center"),
+      total = colDef(name = "Total",
+                     align = "center",
+                     format = colFormat(suffix = " injuries"))),
+    pagination = TRUE,
+    striped = TRUE,
+    outlined = TRUE,
+    compact = TRUE,
+    highlight = TRUE,
+    bordered = TRUE,
+    searchable = TRUE
+    )
+```
+
+### Sport Level
+
+```{r, include=FALSE}
+simsimp %>% 
+  group_by(level) %>% 
+  summarize(total = n()) %>% 
+  arrange(desc(total)) %>% 
+  reactable(
+    columns = list(
+      level = colDef(name = "Level",
+                      align = "center"),
+      total = colDef(name = "Total",
+                     align = "center",
+                     format = colFormat(suffix = " injuries"))),
+    pagination = TRUE,
+    striped = TRUE,
+    outlined = TRUE,
+    compact = TRUE,
+    highlight = TRUE,
+    bordered = TRUE
+    )
+```
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### RTL Summary 
+
+```{r, include=TRUE}
+create_react_time(simsimp, dys_btwn_onset_rtp_3)
+```
+
+### RTL Sex
+
+```{r, include=TRUE}
+create_react_time2(simsimp, gender, dys_btwn_onset_rtp_3)
+```
+
+### RTL Age
+
+```{r, include=TRUE}
+create_react_time2(simsimp, age, dys_btwn_onset_rtp_3)
+```
+
+### RTL League
+
+```{r, include=TRUE}
+create_react_time2(simsimp, league, dys_btwn_onset_rtp_3)
+```
+
+### RTL School
+
+```{r, include=TRUE}
+create_react_time2(simsimp, school, dys_btwn_onset_rtp_3)
+```
+
+### RTL Sport
+
+```{r, include=TRUE}
+create_react_time2(simsimp, sport, dys_btwn_onset_rtp_3)
+```
+
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### RTP Summary 
+
+```{r, include=TRUE}
+create_react_time(simsimp, dys_btwn_onset_rtp_7)
+```
+
+### RTP Sex
+
+```{r, include=TRUE}
+create_react_time2(simsimp, gender, dys_btwn_onset_rtp_7)
+```
+
+### RTP Age
+
+```{r, include=TRUE}
+create_react_time2(simsimp, age, dys_btwn_onset_rtp_7)
+```
+
+### RTP League
+
+```{r, include=TRUE}
+create_react_time2(simsimp, league, dys_btwn_onset_rtp_7)
+```
+
+### RTP School
+
+```{r, include=TRUE}
+create_react_time2(simsimp, school, dys_btwn_onset_rtp_7)
+```
+
+### RTP Sport
+
+```{r, include=TRUE}
+create_react_time2(simsimp, sport, dys_btwn_onset_rtp_7)
 ```
