@@ -1,36 +1,198 @@
 ---
-title: "Untitled"
+title: "HCAMP Paper Version 2"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
-    vertical_layout: fill
+    orientation: rows
+    social: menu
+    source_code: embed
+    vertical_layout: scroll
+    theme: united
 ---
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
+library(tidyverse)
+library(here)
+library(janitor)
+library(rio)
+library(colorblindr)
+library(gghighlight)
+library(forcats)
+library(ggrepel)
+library(knitr)
+library(kableExtra)
+library(reactable)
+library(plotly)
+library(glue)
+library(fs)
+library(rstatix)
+library(ggpubr)
+library(writexl) 
+library(remotes)
+library(profvis) 
+
+
+theme_fivethirtyeight <- function(base_size = 15, base_family = "") {
+  theme_grey(base_size = base_size, base_family = base_family) %+replace%
+    theme(
+      
+      # Base elements which are not used directly but inherited by others
+      line =              element_line(colour = '#DADADA', size = 0.75, 
+                                       linetype = 1, lineend = "butt"),
+      rect =              element_rect(fill = "#F0F0F0", colour = "#F0F0F0", 
+                                       size = 0.5, linetype = 1),
+      text =              element_text(family = base_family, face = "plain",
+                                       colour = "#656565", size = base_size,
+                                       hjust = 0.5, vjust = 0.5, angle = 0, 
+                                       lineheight = 0.9),
+      
+      # Modified inheritance structure of text element
+      plot.title =        element_text(size = rel(1.5), family = '' , 
+                                       face = 'bold', hjust = -0.05, 
+                                       vjust = 1.5, colour = '#3B3B3B'),
+      axis.title.x =      element_blank(),
+      axis.title.y =      element_blank(),
+      axis.text =         element_text(),
+      
+      # Modified inheritance structure of line element
+      axis.ticks =        element_line(),
+      panel.grid.major =  element_line(),
+      panel.grid.minor =  element_blank(),
+      
+      # Modified inheritance structure of rect element
+      plot.background =   element_rect(),
+      panel.background =  element_rect(),
+      legend.key =        element_rect(colour = '#DADADA'),
+      
+      # Modifiying legend.position
+      legend.position = 'none',
+      
+      complete = TRUE
+    )
+}
+
+
+theme_set(theme_fivethirtyeight())
 ```
 
-Column {data-width=650}
+```{r global, include=FALSE}
+#all clean sims data
+sims_concussion_data <- read_csv(here("data", "sims_concussion_data.csv"))
+
+sims_concussion_data <- sims_concussion_data %>% 
+  mutate(age = as.factor(age))
+
+simsimp <- read_csv(here("data", "clean_impact_sims_data.csv"))
+
+str(simsimp)
+
+simsimp <- simsimp %>% 
+  mutate(dataset = as.factor(dataset),
+         school_year = as.factor(school_year),
+         school = as.factor(school),
+         league = as.factor(league),
+         gender = as.factor(gender),
+         age = as.factor(age),
+         sport = as.factor(sport),
+         injury = as.factor(injury))
+
+```
+
+```{r, include=FALSE}
+#helpful functions 
+
+mean_2 <- function(x) {
+  z <- na.omit(x)
+  sum(z) / length(z)
+}
+
+my_mean <- function(x) {
+  mean(x[x >= 0], na.rm = TRUE)
+}
+
+create_react_time <- function(df, var) {
+    df %>% 
+      summarize(Mean = mean({{var}}),
+                SD = sd({{var}}),
+                Min = min({{var}}),
+                Max = max({{var}}),
+                Total = length({{var}})) %>% 
+      mutate_if(is.numeric, round, 2) %>% 
+      reactable(columns = list(
+        Mean = colDef(format = colFormat(separators = TRUE, suffix = " days")),
+        SD = colDef(format = colFormat(separators = TRUE, suffix = " days")),
+        Min = colDef(format = colFormat(separators = TRUE, suffix = " days")),
+        Max = colDef(format = colFormat(separators = TRUE, suffix = " days")),
+        Total = colDef(format = colFormat(separators = TRUE, suffix = " concussions"))
+      ))
+}
+
+create_react <- function(df, var) {
+    df %>% 
+      summarize(Mean = mean({{var}}),
+                SD = sd({{var}}),
+                Min = min({{var}}),
+                Max = max({{var}}),
+                Total = length({{var}})) %>% 
+      mutate_if(is.numeric, round, 2) %>% 
+      reactable(columns = list(
+        Mean = colDef(format = colFormat(separators = TRUE)),
+        SD = colDef(format = colFormat(separators = TRUE)),
+        Min = colDef(format = colFormat(separators = TRUE)),
+        Max = colDef(format = colFormat(separators = TRUE)),
+        Total = colDef(format = colFormat(separators = TRUE, suffix = " concussions"))
+      ))
+}
+
+
+my_mean(simsimp$dys_btwn_onset_test_4)
+```
+
+
+# Data Overview
+
+Row {.tabset}
 -----------------------------------------------------------------------
 
-### Chart A
+### Sex 
 
-```{r}
-
+```{r, include=FALSE}
+simsimp %>% 
+  group_by(gender) %>% 
+  summarize(total = n()) %>% 
+  arrange(desc(total)) %>% 
+  reactable(
+    columns = list(
+      gender = colDef(name = "Sex",
+                      align = "center"),
+      total = colDef(name = "Total",
+                     align = "center",
+                     format = colFormat(suffix = " injuries"))),
+    pagination = TRUE,
+    striped = TRUE,
+    outlined = TRUE,
+    compact = TRUE,
+    highlight = TRUE,
+    bordered = TRUE
+    )
 ```
 
-Column {data-width=350}
------------------------------------------------------------------------
+```{r, include=FALSE}
+sims_sex <- simsimp %>% 
+  group_by(gender) %>% 
+  summarize(total = n()) %>% 
+  arrange(desc(total))
 
-### Chart B
-
-```{r}
-
+sims_sex_plot <- ggplot(sims_sex, aes(fct_reorder(gender, total), total)) +
+  geom_col(fill = "blue",
+           alpha = 0.7) +
+  scale_y_continuous(limits = c(0, 600),
+                     breaks = c(0, 200, 400, 600)) +
+  coord_flip() +
+  labs(x = "",
+       y = "Total")
 ```
 
-### Chart C
-
-```{r}
-
+```{r, include=TRUE}
+ggplotly(sims_sex_plot)
 ```
-
