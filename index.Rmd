@@ -171,6 +171,9 @@ simsimp %>%
   count(student_id)
 
 length(unique(simsimp$student_id))
+length(unique(simsimp$gender))
+
+
 
 simsimp %>% 
   group_by(row, gender) %>% 
@@ -187,8 +190,8 @@ The **Sex** table displays the total number of injuries by sex used in the data 
   *  **Number of females:** 271
   * **Number of males:** 460
   
-  * 271 females sustained one tracked injury
-  * 460 males sustained one tracked injury 
+  * 260 females sustained one tracked injury
+  * 447 males sustained one tracked injury 
   * 10 females sustained two tracked injuries
   * 12 males sustained two tracked injuries
   * 1 female sustained three tracked injuries
@@ -416,6 +419,52 @@ create_react_time2(simsimp, school, dys_btwn_onset_rtp_3)
 create_react_time2(simsimp, sport, dys_btwn_onset_rtp_3)
 ```
 
+```{r, include=FALSE}
+rtl_smry_plot <- ggplot(simsimp, aes(dys_btwn_onset_rtp_3)) +
+  geom_histogram(fill = "#56B4E9",
+                color = "white", 
+                alpha = 0.9,
+                bins = 10) +
+  labs(x = "Days to Complete RTL")
+
+
+rtl_smry_plot2 <- function(df, x, y) {
+  p <- ggplot(df, aes({{x}})) +
+  geom_histogram(fill = "#56B4E9",
+                color = "white", 
+                alpha = 0.9,
+                bins = 10)
+  p + facet_wrap(vars({{y}})) +
+  labs(x = "Days to Complete RTL",
+       y = "")
+}
+
+rtl_smry_plot2(simsimp, dys_btwn_onset_rtp_3, gender)
+```
+
+### RTL Total 
+
+```{r, include=TRUE}
+ggplotly(rtl_smry_plot)
+```
+
+### Sex
+
+```{r, include=TRUE}
+ggplotly(rtl_smry_plot2(simsimp, dys_btwn_onset_rtp_3, gender))
+```
+
+### Age
+
+```{r, include=TRUE}
+ggplotly(rtl_smry_plot2(simsimp, dys_btwn_onset_rtp_3, age))
+```
+
+### League
+
+```{r, include=TRUE}
+ggplotly(rtl_smry_plot2(simsimp, dys_btwn_onset_rtp_3, league))
+```
 
 Row {.tabset}
 -----------------------------------------------------------------------
