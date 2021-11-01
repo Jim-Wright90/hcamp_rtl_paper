@@ -32,47 +32,55 @@ library(remotes)
 library(profvis) 
 
 
-theme_fivethirtyeight <- function(base_size = 15, base_family = "") {
-  theme_grey(base_size = base_size, base_family = base_family) %+replace%
-    theme(
-      
-      # Base elements which are not used directly but inherited by others
-      line =              element_line(colour = '#DADADA', size = 0.75, 
-                                       linetype = 1, lineend = "butt"),
-      rect =              element_rect(fill = "#F0F0F0", colour = "#F0F0F0", 
-                                       size = 0.5, linetype = 1),
-      text =              element_text(family = base_family, face = "plain",
-                                       colour = "#656565", size = base_size,
-                                       hjust = 0.5, vjust = 0.5, angle = 0, 
-                                       lineheight = 0.9),
-      
-      # Modified inheritance structure of text element
-      plot.title =        element_text(size = rel(1.5), family = '' , 
-                                       face = 'bold', hjust = -0.05, 
-                                       vjust = 1.5, colour = '#3B3B3B'),
-      axis.title.x =      element_blank(),
-      axis.title.y =      element_blank(),
-      axis.text =         element_text(),
-      
-      # Modified inheritance structure of line element
-      axis.ticks =        element_line(),
-      panel.grid.major =  element_line(),
-      panel.grid.minor =  element_blank(),
-      
-      # Modified inheritance structure of rect element
-      plot.background =   element_rect(),
-      panel.background =  element_rect(),
-      legend.key =        element_rect(colour = '#DADADA'),
-      
-      # Modifiying legend.position
-      legend.position = 'none',
-      
-      complete = TRUE
-    )
-}
+# theme_fivethirtyeight <- function(base_size = 15, base_family = "") {
+#   theme_grey(base_size = base_size, base_family = base_family) %+replace%
+#     theme(
+# 
+#       # Base elements which are not used directly but inherited by others
+#       line =              element_line(colour = '#DADADA', size = 0.75,
+#                                        linetype = 1, lineend = "butt"),
+#       rect =              element_rect(fill = "#F0F0F0", colour = "#F0F0F0",
+#                                        size = 0.5, linetype = 1),
+#       text =              element_text(family = base_family, face = "plain",
+#                                        colour = "#656565", size = base_size,
+#                                        hjust = 0.5, vjust = 0.5, angle = 0,
+#                                        lineheight = 0.9),
+# 
+#       # Modified inheritance structure of text element
+#       plot.title =        element_text(size = rel(1.5), family = '' ,
+#                                        face = 'bold', hjust = -0.05,
+#                                        vjust = 1.5, colour = '#3B3B3B'),
+#       axis.title.x =      element_text(),
+#       axis.title.y =      element_text(),
+#       axis.text =         element_text(),
+# 
+#       # Modified inheritance structure of line element
+#       axis.ticks =        element_line(),
+#       panel.grid.major =  element_line(),
+#       panel.grid.minor =  element_blank(),
+# 
+#       # Modified inheritance structure of rect element
+#       plot.background =   element_rect(),
+#       panel.background =  element_rect(),
+#       legend.key =        element_rect(colour = '#DADADA'),
+# 
+#       # Modifiying legend.position
+#       legend.position = 'none',
+# 
+#       complete = TRUE
+#     )
+# }
+# 
+# 
+# theme_set(theme_fivethirtyeight())
 
 
-theme_set(theme_fivethirtyeight())
+theme_set(theme_minimal(15) +
+            theme(legend.position = "bottom",
+                  panel.grid.major.x = element_line(color = "gray60"),
+                  panel.grid.minor.x = element_blank(),
+                  panel.grid.major.y = element_blank())
+          )
 ```
 
 ```{r global, include=FALSE}
@@ -94,7 +102,8 @@ simsimp <- simsimp %>%
          gender = as.factor(gender),
          age = as.factor(age),
          sport = as.factor(sport),
-         injury = as.factor(injury))
+         injury = as.factor(injury)) %>% 
+  mutate_if(is.numeric, round, digits = 3)
 
 ```
 
@@ -152,7 +161,44 @@ create_react <- function(df, var) {
                 Min = min({{var}}),
                 Max = max({{var}}),
                 Total = length({{var}})) %>% 
-      mutate_if(is.numeric, round, 2) %>% 
+      mutate_if(is.numeric, round, 3) %>% 
+      reactable(columns = list(
+        Mean = colDef(format = colFormat(separators = TRUE)),
+        SD = colDef(format = colFormat(separators = TRUE)),
+        Min = colDef(format = colFormat(separators = TRUE)),
+        Max = colDef(format = colFormat(separators = TRUE)),
+        Total = colDef(format = colFormat(separators = TRUE, suffix = " concussions"))
+      ))
+}
+
+
+create_react_age <- function(df, var) {
+    df %>% 
+    group_by(age) %>% 
+      summarize(Mean = mean({{var}}),
+                SD = sd({{var}}),
+                Min = min({{var}}),
+                Max = max({{var}}),
+                Total = length({{var}})) %>% 
+      mutate_if(is.numeric, round, 3) %>% 
+      reactable(columns = list(
+        Mean = colDef(format = colFormat(separators = TRUE)),
+        SD = colDef(format = colFormat(separators = TRUE)),
+        Min = colDef(format = colFormat(separators = TRUE)),
+        Max = colDef(format = colFormat(separators = TRUE)),
+        Total = colDef(format = colFormat(separators = TRUE, suffix = " concussions"))
+      ))
+}
+
+create_react_gender <- function(df, var) {
+    df %>% 
+    group_by(gender) %>% 
+      summarize(Mean = mean({{var}}),
+                SD = sd({{var}}),
+                Min = min({{var}}),
+                Max = max({{var}}),
+                Total = length({{var}})) %>% 
+      mutate_if(is.numeric, round, 3) %>% 
       reactable(columns = list(
         Mean = colDef(format = colFormat(separators = TRUE)),
         SD = colDef(format = colFormat(separators = TRUE)),
@@ -425,7 +471,16 @@ rtl_smry_plot <- ggplot(simsimp, aes(dys_btwn_onset_rtp_3)) +
                 color = "white", 
                 alpha = 0.9,
                 bins = 10) +
-  labs(x = "Days to Complete RTL")
+  labs(x = "Days to Complete RTL",
+       y = "Number of Injuries")
+
+rtp_smry_plot <- ggplot(simsimp, aes(dys_btwn_onset_rtp_7)) +
+  geom_histogram(fill = "#56B4E9",
+                color = "white", 
+                alpha = 0.9,
+                bins = 10) +
+  labs(x = "Days to Complete RTP",
+       y = "Number of Injuries")
 
 
 rtl_smry_plot2 <- function(df, x, y) {
@@ -436,7 +491,18 @@ rtl_smry_plot2 <- function(df, x, y) {
                 bins = 10)
   p + facet_wrap(vars({{y}})) +
   labs(x = "Days to Complete RTL",
-       y = "")
+       y = "Number of Injuries")
+}
+
+rtp_smry_plot2 <- function(df, x, y) {
+  p <- ggplot(df, aes({{x}})) +
+  geom_histogram(fill = "#56B4E9",
+                color = "white", 
+                alpha = 0.9,
+                bins = 10)
+  p + facet_wrap(vars({{y}})) +
+  labs(x = "Days to Complete RTP",
+       y = "Number of Injuries")
 }
 
 rtl_smry_plot2(simsimp, dys_btwn_onset_rtp_3, gender)
@@ -503,4 +569,595 @@ create_react_time2(simsimp, school, dys_btwn_onset_rtp_7)
 
 ```{r, include=TRUE}
 create_react_time2(simsimp, sport, dys_btwn_onset_rtp_7)
+```
+
+### RTL Total 
+
+```{r, include=TRUE}
+ggplotly(rtp_smry_plot)
+```
+
+### Sex
+
+```{r, include=TRUE}
+ggplotly(rtp_smry_plot2(simsimp, dys_btwn_onset_rtp_7, gender))
+```
+
+### Age
+
+```{r, include=TRUE}
+ggplotly(rtp_smry_plot2(simsimp, dys_btwn_onset_rtp_7, age))
+```
+
+### League
+
+```{r, include=TRUE}
+ggplotly(rtp_smry_plot2(simsimp, dys_btwn_onset_rtp_7, league))
+```
+
+
+# Test One PCSS Summary Scores
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+```{r, include=FALSE}
+score_hist <- function(df, x) {
+  ggplot(df, aes({{x}})) +
+  geom_histogram(fill = "#56B4E9",
+                color = "white", 
+                alpha = 0.9,
+                bins = 25) +
+    labs(x = "Symptom Severity",
+         y = "Number of Injuries")
+}
+
+gender_hist <- function(df, x) {
+  ggplot(df, aes({{x}})) +
+  geom_histogram(fill = "#56B4E9",
+                color = "white", 
+                alpha = 0.9,
+                bins = 25) +
+    facet_wrap(~gender) +
+    labs(x = "Symptom Severity",
+         y = "Number of Injuries")
+}
+
+age_hist <- function(df, x) {
+  ggplot(df, aes({{x}})) +
+  geom_histogram(fill = "#56B4E9",
+                color = "white", 
+                alpha = 0.9,
+                bins = 25) +
+    facet_wrap(~age) +
+    labs(x = "Symptom Severity",
+         y = "Number of Injuries")
+}
+
+names(simsimp)
+```
+
+### Total Symptom Score 
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, total_symptom_score_post_injury_1))
+```
+
+### Total Symptom Score Summary
+
+```{r, include=TRUE}
+create_react(simsimp, total_symptom_score_post_injury_1)
+```
+
+### Sex
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, total_symptom_score_post_injury_1))
+```
+
+### Sex Summary
+
+```{r, include=TRUE}
+create_react_gender(simsimp, total_symptom_score_post_injury_1)
+```
+
+### Age
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, total_symptom_score_post_injury_1))
+```
+
+### Age Summary
+
+```{r, include=TRUE}
+create_react_age(simsimp, total_symptom_score_post_injury_1)
+```
+
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Headache-Migraine 
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, headache_migraine_cluster_score_post_injury_1))
+```
+
+### Headache-Migraine Summary
+
+```{r, include=TRUE}
+create_react(simsimp, headache_migraine_cluster_score_post_injury_1)
+```
+
+### Sex
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, headache_migraine_cluster_score_post_injury_1))
+```
+
+### Sex Summary
+
+```{r, include=TRUE}
+create_react_gender(simsimp, headache_migraine_cluster_score_post_injury_1)
+```
+
+### Age
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, headache_migraine_cluster_score_post_injury_1))
+```
+
+### Age Summary
+
+```{r, include=TRUE}
+create_react_age(simsimp, headache_migraine_cluster_score_post_injury_1)
+```
+
+### Headache-Migraine Normalized
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, headache_migraine_test_1))
+```
+
+### Headache-Migraine Summary Normalized
+
+```{r, include=TRUE}
+create_react(simsimp, headache_migraine_test_1)
+```
+
+### Sex Normalized
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, headache_migraine_test_1))
+```
+
+### Sex Summary Normalized
+
+```{r, include=TRUE}
+create_react_gender(simsimp, headache_migraine_test_1)
+```
+
+### Age Normalized 
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, headache_migraine_test_1))
+```
+
+### Age Summary Normalized
+
+```{r, include=TRUE}
+create_react_age(simsimp, headache_migraine_test_1)
+```
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Cognitive
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, cognitive_cluster_score_post_injury_1))
+```
+
+### Cognitive Summary
+
+```{r, include=TRUE}
+create_react(simsimp, cognitive_cluster_score_post_injury_1)
+```
+
+### Sex
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, cognitive_cluster_score_post_injury_1))
+```
+
+### Sex Summary
+
+```{r, include=TRUE}
+create_react_gender(simsimp, cognitive_cluster_score_post_injury_1)
+```
+
+### Age
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, cognitive_cluster_score_post_injury_1))
+```
+
+### Age Summary
+
+```{r, include=TRUE}
+create_react_age(simsimp, cognitive_cluster_score_post_injury_1)
+```
+
+### Cognitive Normalized
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, cognitive_test_1))
+```
+
+### Cognitive Summary Normalized
+
+```{r, include=TRUE}
+create_react(simsimp, cognitive_test_1)
+```
+
+### Sex Normalized
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, cognitive_test_1))
+```
+
+### Sex Summary Normalized
+
+```{r, include=TRUE}
+create_react_gender(simsimp, cognitive_test_1)
+```
+
+### Age Normalized 
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, cognitive_test_1))
+```
+
+### Age Summary Normalized
+
+```{r, include=TRUE}
+create_react_age(simsimp, cognitive_test_1)
+```
+
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Anxiety-Mood
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, anxiety_mood_cluster_score_post_injury_1))
+```
+
+### Anxiety-Mood Summary
+
+```{r, include=TRUE}
+create_react(simsimp, anxiety_mood_cluster_score_post_injury_1)
+```
+
+### Sex
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, anxiety_mood_cluster_score_post_injury_1))
+```
+
+### Sex Summary
+
+```{r, include=TRUE}
+create_react_gender(simsimp, anxiety_mood_cluster_score_post_injury_1)
+```
+
+### Age
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, anxiety_mood_cluster_score_post_injury_1))
+```
+
+### Age Summary
+
+```{r, include=TRUE}
+create_react_age(simsimp, anxiety_mood_cluster_score_post_injury_1)
+```
+
+### Anxiety-Mood Normalized
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, anxiety_mood_test_1))
+```
+
+### Anxiety-Mood Summary Normalized
+
+```{r, include=TRUE}
+create_react(simsimp, anxiety_mood_test_1)
+```
+
+### Sex Normalized
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, anxiety_mood_test_1))
+```
+
+### Sex Summary Normalized
+
+```{r, include=TRUE}
+create_react_gender(simsimp, anxiety_mood_test_1)
+```
+
+### Age Normalized 
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, anxiety_mood_test_1))
+```
+
+### Age Summary Normalized
+
+```{r, include=TRUE}
+create_react_age(simsimp, anxiety_mood_test_1)
+```
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Ocular-Motor 
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, ocular_motor_cluster_score_post_injury_1))
+```
+
+### Ocular-Motor Summary
+
+```{r, include=TRUE}
+create_react(simsimp, ocular_motor_cluster_score_post_injury_1)
+```
+
+### Sex
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, ocular_motor_cluster_score_post_injury_1))
+```
+
+### Sex Summary
+
+```{r, include=TRUE}
+create_react_gender(simsimp, ocular_motor_cluster_score_post_injury_1)
+```
+
+### Age
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, ocular_motor_cluster_score_post_injury_1))
+```
+
+### Age Summary
+
+```{r, include=TRUE}
+create_react_age(simsimp, ocular_motor_cluster_score_post_injury_1)
+```
+
+### Ocular-Motor Normalized
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, ocular_motor_test_1))
+```
+
+### Ocular-Motor Summary Normalized
+
+```{r, include=TRUE}
+create_react(simsimp, ocular_motor_test_1)
+```
+
+### Sex Normalized
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, ocular_motor_test_1))
+```
+
+### Sex Summary Normalized
+
+```{r, include=TRUE}
+create_react_gender(simsimp, ocular_motor_test_1)
+```
+
+### Age Normalized 
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, ocular_motor_test_1))
+```
+
+### Age Summary Normalized
+
+```{r, include=TRUE}
+create_react_age(simsimp, ocular_motor_test_1)
+```
+
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Vestibular 
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, vestibular_cluster_score_post_injury_1))
+```
+
+### Vestibular Summary
+
+```{r, include=TRUE}
+create_react(simsimp, vestibular_cluster_score_post_injury_1)
+```
+
+### Sex
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, vestibular_cluster_score_post_injury_1))
+```
+
+### Sex Summary
+
+```{r, include=TRUE}
+create_react_gender(simsimp, vestibular_cluster_score_post_injury_1)
+```
+
+### Age
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, vestibular_cluster_score_post_injury_1))
+```
+
+### Age Summary
+
+```{r, include=TRUE}
+create_react_age(simsimp, vestibular_cluster_score_post_injury_1)
+```
+
+### Vestibular Normalized
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, vestibular_test_1))
+```
+
+### Vestibular Summary Normalized
+
+```{r, include=TRUE}
+create_react(simsimp, vestibular_test_1)
+```
+
+### Sex Normalized
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, vestibular_test_1))
+```
+
+### Sex Summary Normalized
+
+```{r, include=TRUE}
+create_react_gender(simsimp, vestibular_test_1)
+```
+
+### Age Normalized 
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, vestibular_test_1))
+```
+
+### Age Summary Normalized
+
+```{r, include=TRUE}
+create_react_age(simsimp, vestibular_test_1)
+```
+
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Sleep
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, sleep_cluster_score_post_injury_1))
+```
+
+### Sleep Summary
+
+```{r, include=TRUE}
+create_react(simsimp, sleep_cluster_score_post_injury_1)
+```
+
+### Sex
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, sleep_cluster_score_post_injury_1))
+```
+
+### Sex Summary
+
+```{r, include=TRUE}
+create_react_gender(simsimp, sleep_cluster_score_post_injury_1)
+```
+
+### Age
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, sleep_cluster_score_post_injury_1))
+```
+
+### Age Summary
+
+```{r, include=TRUE}
+create_react_age(simsimp, sleep_cluster_score_post_injury_1)
+```
+
+### Sleep Normalized
+
+```{r, include=TRUE}
+ggplotly(score_hist(simsimp, sleep_test_1))
+```
+
+### Sleep Summary Normalized
+
+```{r, include=TRUE}
+create_react(simsimp, sleep_test_1)
+```
+
+### Sex Normalized
+
+```{r, include=TRUE}
+ggplotly(gender_hist(simsimp, sleep_test_1))
+```
+
+### Sex Summary Normalized
+
+```{r, include=TRUE}
+create_react_gender(simsimp, sleep_test_1)
+```
+
+### Age Normalized 
+
+```{r, include=TRUE}
+ggplotly(age_hist(simsimp, sleep_test_1))
+```
+
+### Age Summary Normalized
+
+```{r, include=TRUE}
+create_react_age(simsimp, sleep_test_1)
+```
+
+
+# Models
+
+Sidebar {.sidebar}
+------------
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Sex:Total Symptom Score
+
+```{r, include=FALSE}
+# modeling age:total symptom score model
+
+names(simsimp)
+
+sex_test_1_mod <- lm(dys_btwn_onset_rtp_3 ~ gender*total_symptom_score_post_injury_1, 
+                     data = simsimp)
+
+
+summary(sex_test_1_mod)
+confint(sex_test_1_mod)
+
+sex_age_mod <- lm(dys_btwn_onset_rtp_3 ~ gender*age, data = simsimp)
+
+summary(sex_age_mod)
+
+sex_age_test_1_mod <- lm(dys_btwn_onset_rtp_3 ~ 
+                            gender*age*total_symptom_score_post_injury_1, 
+                          data = simsimp)
+
+summary(sex_age_test_1_mod)
+
 ```
