@@ -1136,7 +1136,58 @@ Sidebar {.sidebar}
 Row {.tabset}
 -----------------------------------------------------------------------
 
-### Sex:Total Symptom Score
+### Plot 1
+
+```{r, include=FALSE}
+p1 <- ggplot(simsimp, aes(dys_btwn_onset_rtp_3, total_symptom_score_post_injury_1)) +
+  geom_point(color = "gray70") +
+  geom_smooth() +
+  geom_smooth(method = "lm",
+              color = "magenta") +
+  labs(x = "Days to Complete RTL",
+       y = "Test 1 Total Symptom Severity Score")
+```
+
+```{r, include=TRUE}
+ggplotly(p1)
+```
+
+### Plot 2
+
+```{r, include=FALSE}
+p2 <- ggplot(simsimp, aes(dys_btwn_onset_rtp_3, total_symptom_score_post_injury_1)) +
+  geom_point(color = "gray70") +
+  geom_smooth(aes(color = gender),
+              method = "lm") +
+  labs(x = "Days to Complete RTL",
+       y = "Test 1 Total Symptom Severity Score")
+```
+
+```{r, include=TRUE}
+ggplotly(p2)
+```
+
+
+### Plot 3
+
+```{r, include=FALSE}
+p3 <- ggplot(simsimp, aes(dys_btwn_onset_rtp_3, total_symptom_score_post_injury_1)) +
+  geom_point(color = "gray70") +
+  geom_smooth(aes(color = age),
+              method = "lm") +
+  labs(x = "Days to Complete RTL",
+       y = "Test 1 Total Symptom Severity Score")
+```
+
+```{r, include=TRUE}
+ggplotly(p3)
+```
+
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Test 1 Model
 
 ```{r, include=FALSE}
 # modeling age:total symptom score model
@@ -1160,4 +1211,90 @@ sex_age_test_1_mod <- lm(dys_btwn_onset_rtp_3 ~
 
 summary(sex_age_test_1_mod)
 
+
+# LM examples 
+
+test_1_sev_mod <- lm(dys_btwn_onset_rtp_3 ~ total_symptom_score_post_injury_1,
+                     data = simsimp)
+
+summary(test_1_sev_mod)
+fitted(test_1_sev_mod)
+
+
+```
+
+```{r, include=TRUE}
+summary(test_1_sev_mod)
+```
+
+### Sex Model
+
+```{r, include=FALSE}
+sex_mod <- lm(dys_btwn_onset_rtp_3 ~ gender, data = simsimp)
+```
+
+```{r, include=TRUE}
+summary(sex_mod)
+```
+
+### Age Model
+
+```{r, include=FALSE}
+age_mod <- lm(dys_btwn_onset_rtp_3 ~ age, data = simsimp)
+```
+
+```{r, include=TRUE}
+summary(age_mod)
+```
+
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Additive Model: Sex and Test 1 Severity 
+
+```{r, include=FALSE}
+sex_test_add_mod <- lm(dys_btwn_onset_rtp_3 ~ gender + total_symptom_score_post_injury_1, 
+                     data = simsimp)
+```
+
+```{r, include=TRUE}
+summary(sex_test_add_mod)
+```
+
+### Additive Model: Age and Test 1 Severity 
+
+```{r, include=FALSE}
+age_test_add_mod <- lm(dys_btwn_onset_rtp_3 ~ age + total_symptom_score_post_injury_1, 
+                     data = simsimp)
+```
+
+```{r, include=TRUE}
+summary(age_test_add_mod)
+```
+
+
+### Additive Model: Sex, Age and Test 1 Severity 
+
+```{r, include=FALSE}
+sex_age_test_add_mod <- lm(dys_btwn_onset_rtp_3 ~ gender + age + 
+                             total_symptom_score_post_injury_1, data = simsimp)
+```
+
+```{r, include=TRUE}
+summary(sex_age_test_add_mod)
+```
+
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Interaction Model: Sex, Age and Test 1 Severity 
+
+```{r, include=FALSE}
+sex_age_test_int_mod <- lm(dys_btwn_onset_rtp_3 ~ gender*age*total_symptom_score_post_injury_1, data = simsimp)
+```
+
+```{r, include=TRUE}
+summary(sex_age_test_int_mod)
 ```
