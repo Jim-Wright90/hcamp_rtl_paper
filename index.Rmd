@@ -1298,3 +1298,107 @@ sex_age_test_int_mod <- lm(dys_btwn_onset_rtp_3 ~ gender*age*total_symptom_score
 ```{r, include=TRUE}
 summary(sex_age_test_int_mod)
 ```
+
+
+# Test 1 Severity ANOVA
+
+Sidebar {.sidebar}
+------------
+
+```{r, include=FALSE}
+simsimp_long <- simsimp %>% 
+  pivot_longer(
+    cols = c(60:65),
+    names_to = "symptom_cluster",
+    values_to = "score_test_1",
+    names_pattern = "(.*)_test_1"
+  )
+```
+
+```{r, include=FALSE}
+cluster_bxp <- function(df, x, y) {
+  ggplot(df, aes({{x}}, {{y}}, fill = gender)) +
+  geom_boxplot() + 
+  scale_fill_OkabeIto() +
+  coord_flip() +
+  labs(x = "Symptom Cluster",
+       y = "Scaled Severity Score") +
+  theme(legend.position = "bottom")
+}
+
+cluster_bxp(simsimp_long, symptom_cluster, score_test_1)
+```
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Test 1 Boxplot
+
+```{r, include=TRUE, fig.width=10}
+cluster_bxp(simsimp_long, symptom_cluster, score_test_1)
+```
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Two-Way ANOVA: Sex and Test 1 Severity
+
+```{r, include=FALSE}
+anova_react <- function(df) {
+  df %>% 
+    reactable(
+      defaultColDef = colDef(align = "center",
+                             format = colFormat(digits = 2, separators = TRUE)),
+      pagination = TRUE,
+      striped = TRUE,
+      outlined = TRUE,
+      compact = TRUE,
+      highlight = TRUE,
+      bordered = TRUE
+    )
+}
+
+pwc_react <- function(df) {
+  df %>% 
+    reactable(
+      defaultColDef = colDef(align = "center",
+                             format = colFormat(digits = 3, separators = TRUE)),
+      pagination = TRUE,
+      striped = TRUE,
+      outlined = TRUE,
+      compact = TRUE,
+      highlight = TRUE,
+      bordered = TRUE,
+      searchable = TRUE
+    )  
+}
+```
+
+```{r, include=FALSE}
+aov_res <- aov(score_test_1 ~ symptom_cluster * gender,
+               data = simsimp_long)
+
+summary(aov_res)
+
+aov_res
+
+Anova(aov_res, type = "III")
+
+TukeyHSD(aov_res)
+
+aov_res2 <- Anova(aov_res, type = "III")
+
+tukey_res <- TukeyHSD(aov_res)
+
+```
+
+```{r, include=TRUE}
+anova_react(aov_res2)
+```
+
+### PWC
+
+```{r, include=TRUE}
+tidy(tukey_res) %>% 
+  pwc_react()
+```
