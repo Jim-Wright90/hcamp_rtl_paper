@@ -92,6 +92,10 @@ sims_concussion_data <- sims_concussion_data %>%
 
 simsimp <- read_csv(here("data", "clean_impact_sims_data.csv"))
 
+mod_data <- read_csv(here("data", "clean_impact_sims_data.csv"))
+
+mod_datav2 <- read_csv(here("data", "clean_impact_sims_data.csv"))
+
 str(simsimp)
 
 simsimp <- simsimp %>% 
@@ -105,6 +109,139 @@ simsimp <- simsimp %>%
          injury = as.factor(injury)) %>% 
   mutate_if(is.numeric, round, digits = 3)
 
+mod_data <- mod_data %>% 
+  mutate(dataset = as.factor(dataset),
+         school_year = as.factor(school_year),
+         school = as.factor(school),
+         league = as.factor(league),
+         gender = as.factor(gender),
+         sport = as.factor(sport),
+         injury = as.factor(injury)) %>% 
+  mutate_if(is.numeric, round, digits = 3)
+
+str(mod_data)
+
+mod_datav2 <- mod_datav2 %>% 
+  mutate(dataset = as.factor(dataset),
+         school_year = as.factor(school_year),
+         school = as.factor(school),
+         league = as.factor(league),
+         gender = as.factor(gender),
+         sport = as.factor(sport),
+         injury = as.factor(injury)) %>% 
+  mutate_if(is.numeric, round, digits = 3)
+
+str(mod_datav2)
+```
+
+```{r, include=FALSE}
+# creating new data set for machine learning models
+
+names(simsimp)
+str(simsimp)
+names(mod_data)
+
+mod_data[mod_data$age <= 16, "age_group"] <- "13-16"
+mod_data[mod_data$age >=17, "age_group"] <- "17-18"
+
+names(mod_data)
+
+mod_data %>% 
+  count(age_group)
+
+str(mod_data)
+
+mod_data <- mod_data %>% 
+  mutate(age_group = as.factor(age_group))
+
+str(mod_data)
+
+mod_data[mod_data$dys_btwn_onset_rtp_3 <= 6, "rtl_group"] <- "0-6"
+mod_data[mod_data$dys_btwn_onset_rtp_3 >= 7 & mod_data$dys_btwn_onset_rtp_3 <= 12,
+         "rtl_group"] <- "7-12"
+mod_data[mod_data$dys_btwn_onset_rtp_3 >= 13 & mod_data$dys_btwn_onset_rtp_3 <= 18,
+         "rtl_group"] <- "13-18"
+mod_data[mod_data$dys_btwn_onset_rtp_3 >= 19 & mod_data$dys_btwn_onset_rtp_3 <= 24,
+         "rtl_group"] <- "19-24"
+mod_data[mod_data$dys_btwn_onset_rtp_3 >= 25 & mod_data$dys_btwn_onset_rtp_3 <= 30,
+         "rtl_group"] <- "25-30"
+
+str(mod_data)
+
+mod_data <- mod_data %>% 
+  mutate(rtl_group = as.factor(rtl_group))
+
+mod_data %>% 
+  count(rtl_group)
+
+mod_data_2 <- mod_data
+
+mod_data_2[mod_data_2$total_symptom_score_post_injury_1 <= 16,
+           "test_1_pcss_group"] <- "0-16"
+mod_data_2[mod_data_2$total_symptom_score_post_injury_1 >= 17 &
+           mod_data_2$total_symptom_score_post_injury_1 <= 32,
+           "test_1_pcss_group"] <- "17-32"
+mod_data_2[mod_data_2$total_symptom_score_post_injury_1 >= 33 &
+           mod_data_2$total_symptom_score_post_injury_1 <= 48,
+           "test_1_pcss_group"] <- "33-48"
+mod_data_2[mod_data_2$total_symptom_score_post_injury_1 >= 49 &
+           mod_data_2$total_symptom_score_post_injury_1 <= 64,
+           "test_1_pcss_group"] <- "49-64"
+mod_data_2[mod_data_2$total_symptom_score_post_injury_1 >= 65 &
+           mod_data_2$total_symptom_score_post_injury_1 <= 80,
+           "test_1_pcss_group"] <- "65-80"
+mod_data_2[mod_data_2$total_symptom_score_post_injury_1 >= 81,
+           "test_1_pcss_group"] <- "81 or higher"
+
+str(mod_data_2)
+
+mod_data_2 <- mod_data_2 %>% 
+  mutate(test_1_pcss_group = as.factor(test_1_pcss_group))
+
+str(mod_data_2)
+
+mod_data_2 %>% 
+  count(test_1_pcss_group)
+
+
+# per Tom's suggestion, divding RTL group into two levels - splitting around 12, which is the mean
+
+
+mod_datav2[mod_datav2$age <= 16, "age_group"] <- "13-16"
+mod_datav2[mod_datav2$age >=17, "age_group"] <- "17-18"
+
+mod_datav2[mod_datav2$dys_btwn_onset_rtp_3 <= 12, "rtl_group"] <- "0-12"
+mod_datav2[mod_datav2$dys_btwn_onset_rtp_3 >= 13, "rtl_group"] <- "13-30"
+
+mod_datav2[mod_datav2$total_symptom_score_post_injury_1 <= 16,
+           "test_1_pcss_group"] <- "0-16"
+mod_datav2[mod_datav2$total_symptom_score_post_injury_1 >= 17 &
+           mod_datav2$total_symptom_score_post_injury_1 <= 32,
+           "test_1_pcss_group"] <- "17-32"
+mod_datav2[mod_datav2$total_symptom_score_post_injury_1 >= 33 &
+           mod_datav2$total_symptom_score_post_injury_1 <= 48,
+           "test_1_pcss_group"] <- "33-48"
+mod_datav2[mod_datav2$total_symptom_score_post_injury_1 >= 49 &
+           mod_datav2$total_symptom_score_post_injury_1 <= 64,
+           "test_1_pcss_group"] <- "49-64"
+mod_datav2[mod_datav2$total_symptom_score_post_injury_1 >= 65 &
+           mod_datav2$total_symptom_score_post_injury_1 <= 80,
+           "test_1_pcss_group"] <- "65-80"
+mod_datav2[mod_datav2$total_symptom_score_post_injury_1 >= 81,
+           "test_1_pcss_group"] <- "81 or higher"
+
+
+str(mod_datav2)
+
+mod_datav2 <- mod_datav2 %>% 
+  mutate(rtl_group = as.factor(rtl_group),
+         test_1_pcss_group = as.factor(test_1_pcss_group),
+         age_group = as.factor(age_group))
+
+str(mod_datav2)
+
+mod_datav2 %>% 
+  count(rtl_group)
 ```
 
 ```{r, include=FALSE}
@@ -530,6 +667,33 @@ ggplotly(rtl_smry_plot2(simsimp, dys_btwn_onset_rtp_3, age))
 
 ```{r, include=TRUE}
 ggplotly(rtl_smry_plot2(simsimp, dys_btwn_onset_rtp_3, league))
+```
+
+### RTL Group Summary
+
+```{r, include=TRUE}
+mod_data %>% 
+  group_by(gender, age_group, rtl_group) %>% 
+  summarize(total = n()) %>% 
+  reactable(
+    columns = list(
+      gender = colDef(name = "Sex",
+                      align = "center"),
+      age_group = colDef(name = "Age Group",
+                         align = "center"),
+      rtl_group = colDef(name = "RTL Group",
+                         align = "center",
+                         format = colFormat(suffix = " days")),
+      total = colDef(name = "Total",
+                     align = "center",
+                     format = colFormat(suffix = " injuries"))),
+    pagination = TRUE,
+    striped = TRUE,
+    outlined = TRUE,
+    compact = TRUE,
+    highlight = TRUE,
+    bordered = TRUE    
+  )
 ```
 
 Row {.tabset}
@@ -1133,6 +1297,8 @@ create_react_age(simsimp, sleep_test_1)
 Sidebar {.sidebar}
 ------------
 
+The interaction models are the strongest relative models, approaching adjusted *R-*squared values of 0.05; however, the amount of variance accounted for within these models is still very small. Considering the plots at the top of the page, it is evident there is not a linear relationship between the hypothesized predictor variables (age, sex, test 1 PCSS score) and RTL duration time. 
+
 Row {.tabset}
 -----------------------------------------------------------------------
 
@@ -1291,6 +1457,8 @@ Row {.tabset}
 
 ### Interaction Model: Sex, Age and Test 1 Severity 
 
+Adjusted *R-*squared of 0.058
+
 ```{r, include=FALSE}
 sex_age_test_int_mod <- lm(dys_btwn_onset_rtp_3 ~ gender*age*total_symptom_score_post_injury_1, data = simsimp)
 ```
@@ -1299,11 +1467,28 @@ sex_age_test_int_mod <- lm(dys_btwn_onset_rtp_3 ~ gender*age*total_symptom_score
 summary(sex_age_test_int_mod)
 ```
 
+### Interaction Model: Sex:Age plus Test 1 Severity 
+
+Adjusted *R-*squared of 0.047
+
+```{r, include=FALSE}
+sex_age_int_plus_test <- lm(dys_btwn_onset_rtp_3 ~ gender*age + total_symptom_score_post_injury_1, data = simsimp)
+```
+
+```{r, include=TRUE}
+summary(sex_age_int_plus_test)
+```
+
+```{r, include=FALSE}
+#plot(sex_age_int_plus_test)
+```
 
 # Test 1 Severity ANOVA
 
 Sidebar {.sidebar}
 ------------
+
+The ANOVA generated results similar to the findings from the first iteration of the paper. Females report higher symptom severity than males across most clusters. The headache-migraine, sleep, and cognitive clusters are rated with the highest symptom severity. 
 
 ```{r, include=FALSE}
 simsimp_long <- simsimp %>% 
@@ -1402,3 +1587,4 @@ anova_react(aov_res2)
 tidy(tukey_res) %>% 
   pwc_react()
 ```
+
